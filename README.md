@@ -49,9 +49,11 @@ Try it in two browser windows: sign in as alice in one and create an invoice, si
 | `GET /api/payments`, `GET /api/payments/{id}` | signed in | PENDING, IN_FLIGHT, SUCCEEDED (with preimage) or FAILED |
 | `GET/POST /api/admin/payouts` | admin | read or flip the pause switch |
 
-## Failure tests
+## Tests
 
-What happens when the paying node is down, the service is killed mid-payment, a request is repeated, or payouts are paused: see [docs/test-report.md](docs/test-report.md).
+Failure tests on real nodes (node down, service killed mid-payment, repeated requests, pause switch), a load test of the API, and screenshots: see [docs/test-report.md](docs/test-report.md).
+
+![Payments table during the node-down test](docs/img/payments-node-down-and-retries.png)
 
 ## Hardening
 
