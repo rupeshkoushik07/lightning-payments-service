@@ -34,9 +34,21 @@ Run on 11–12 November 2026 on a local regtest network (Polar: Bitcoin Core 30.
 | E | Stopped bob, asked to pay (row `IN_FLIGHT`), killed the service with `kill -9`, restarted both | Row survived the kill; the tracker settled it as `FAILED` after start-up; a retry `SUCCEEDED` | the row is saved before the node is called; recovery needs only the database and the node |
 | F | Pasted "hello" as an invoice; asked for a 200,000-sat invoice; pasted a genuine 150,000-sat invoice; signed in as alice and as bob | All three refused with a clear message and no row; alice has no pay action, bob has no receive action | input is checked first; "valid" and "allowed" are separate; each action names its roles |
 
-Not run by hand: invoice expiry (needs an hour of waiting).
+Invoice expiry was not run as a separate test, but it was observed: invoices left unpaid during testing were marked `EXPIRED` by the background job after their hour ran out (visible in the invoices table below).
 
 ### Screenshots
+
+The page after the tests, signed in as the operator. Both nodes are connected, and bob's channel is ready with 238,530 sats to send.
+
+![Dashboard with both nodes connected](img/dashboard.webp)
+
+Every payment and invoice from the test session. Payments: succeeded ones carry their preimage, failed ones carry the node's reason. Invoices: paid, still open, and expired.
+
+![Payments and invoices tables](img/payments-and-invoices.webp)
+
+Sign-in. Each user has one role: receive, pay, or operate.
+
+![Sign-in screen](img/sign-in.webp)
 
 The first payment between the two nodes, seen in Polar: 1,000 sats moved from bob's side of the channel to alice's.
 

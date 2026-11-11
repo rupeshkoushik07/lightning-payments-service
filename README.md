@@ -1,5 +1,7 @@
 # ln-payment-go
 
+![The service connected to two LND nodes](docs/img/dashboard.webp)
+
 A small Go service that sits next to two Lightning (LND) nodes: one receives ("alice"), one pays ("bob").
 It creates invoices, pays invoices, and keeps a correct record of every payment, including when things fail.
 
@@ -52,8 +54,6 @@ Try it in two browser windows: sign in as alice in one and create an invoice, si
 ## Tests
 
 Failure tests on real nodes (node down, service killed mid-payment, repeated requests, pause switch), a load test of the API, and screenshots: see [docs/test-report.md](docs/test-report.md).
-
-![Payments table during the node-down test](docs/img/payments-node-down-and-retries.png)
 
 ## Hardening
 
