@@ -51,7 +51,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "sign-in failed")
 		os.Exit(1)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Prepare the request bodies first, so signing invoices is not part of the timing.
 	key, _ := btcec.NewPrivateKey()
@@ -88,7 +88,7 @@ func main() {
 				} else {
 					codes[res.StatusCode]++
 					times = append(times, d)
-					res.Body.Close()
+					_ = res.Body.Close()
 				}
 				mu.Unlock()
 			}

@@ -1,5 +1,8 @@
 name: ci
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 permissions:
   contents: read
 
@@ -44,6 +47,9 @@ jobs:
 
   secrets:
     name: secret scan (keys committed by mistake)
+    # Runs on pushes to main. Pull requests from bots get a read-only token
+    # that this scanner cannot use.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
