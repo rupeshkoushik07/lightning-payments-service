@@ -23,6 +23,10 @@ Status: work in progress. The pieces below compile; they have not yet been run a
 | `internal/httpapi` | `POST /payments` |
 | `internal/worker` | sender (pays) and tracker (resolves unknown outcomes) |
 
+## Hardening
+
+SQL injection, vulnerability checks, backups and stress testing: see [docs/hardening.md](docs/hardening.md).
+
 ## Test
 
 ```bash
