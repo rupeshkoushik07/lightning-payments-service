@@ -19,9 +19,10 @@ CREATE TABLE invoices (
 -- The sweeper looks for open invoices past their time.
 CREATE INDEX invoices_open ON invoices (expires_at) WHERE status = 'OPEN';
 
--- Our place in the node's list of paid invoices. Exactly one row.
+-- Our place in the node's two numbered lists. Exactly one row.
 CREATE TABLE listener_state (
     only_row      BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (only_row),
-    settle_index  BIGINT NOT NULL DEFAULT 0
+    add_index     BIGINT NOT NULL DEFAULT 0,  -- last created invoice we have seen
+    settle_index  BIGINT NOT NULL DEFAULT 0   -- last paid invoice we have recorded
 );
 INSERT INTO listener_state DEFAULT VALUES;

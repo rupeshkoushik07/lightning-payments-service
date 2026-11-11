@@ -40,3 +40,46 @@ func (r *Receiver) AddInvoice(ctx context.Context, amountSat int64, memo string,
 		ExpiresAt:   asked.Add(validFor),
 	}, nil
 }
+
+// Event is one message from the node about an invoice.
+type Event struct {
+	Invoice     store.NewInvoice
+	AddIndex    uint64
+	Paid        bool
+	SettleIndex uint64
+	PaidAt      time.Time
+}
+
+// Subscribe opens the long-lived line to the node and calls handle for every
+// invoice created or paid after the given place. It returns when the line breaks.
+func (r *Receiver) Subscribe(ctx context.Context, from store.Place, handle func(Event) error) error {
+	stream, err := r.ln.SubscribeInvoices(ctx, &lnrpc.InvoiceSubscription{
+		AddIndex:    from.AddIndex,    // "replay every invoice created after this number"
+		SettleIndex: from.SettleIndex, // "replay every invoice paid after this number"
+	})
+	if err != nil {
+		return err
+	}
+	for {
+		inv, err := stream.Recv() // waits here until the node has something to say
+		if err != nil {
+			return err
+		}
+		ev := Event{
+			Invoice: store.NewInvoice{
+				PaymentHash: inv.RHash,
+				Text:        inv.PaymentRequest,
+				AmountSat:   inv.Value,
+				Memo:        inv.Memo,
+				ExpiresAt:   time.Unix(inv.CreationDate+inv.Expiry, 0),
+			},
+			AddIndex:    inv.AddIndex,
+			Paid:        inv.State == lnrpc.Invoice_SETTLED,
+			SettleIndex: inv.SettleIndex,
+			PaidAt:      time.Unix(inv.SettleDate, 0),
+		}
+		if err := handle(ev); err != nil {
+			return err // stop; we will reconnect and the node will replay this one
+		}
+	}
+}
