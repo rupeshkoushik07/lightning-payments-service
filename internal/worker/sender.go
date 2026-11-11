@@ -32,6 +32,7 @@ type Node interface {
 }
 
 type Payments interface {
+	PayoutsPaused(ctx context.Context) (bool, error)
 	ClaimPending(ctx context.Context) (store.Job, error)
 	MarkSucceeded(ctx context.Context, id int64, preimage []byte) error
 	MarkFailed(ctx context.Context, id int64, reason string) error
@@ -45,6 +46,12 @@ type Sender struct {
 
 // PayOne takes one pending payment and asks the node to pay it.
 func (s *Sender) PayOne(ctx context.Context) error {
+	// 0. Has an operator paused payouts? Then take nothing; rows wait as PENDING.
+	//    If we cannot read the switch, we also do not pay.
+	if paused, err := s.Payments.PayoutsPaused(ctx); err != nil || paused {
+		return store.ErrNothingToDo
+	}
+
 	// 1. Take a payment. The row is IN_FLIGHT from this point on.
 	job, err := s.Payments.ClaimPending(ctx)
 	if err != nil {

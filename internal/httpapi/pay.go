@@ -26,7 +26,12 @@ type PaymentSaver interface {
 	CreatePayment(ctx context.Context, p store.NewPayment) (int64, error)
 }
 
+type PauseChecker interface {
+	PayoutsPaused(ctx context.Context) (bool, error)
+}
+
 type PayHandler struct {
+	Pause        PauseChecker
 	Decoder      Decoder
 	Payments     PaymentSaver
 	MaxAmountSat int64
@@ -40,6 +45,12 @@ func (h *PayHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 4096) // an invoice is short; refuse huge bodies
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		reply(w, http.StatusBadRequest, "body must be JSON with an invoice field")
+		return
+	}
+
+	// 0. Kill switch. If we cannot read it, we refuse too: fail closed.
+	if paused, err := h.Pause.PayoutsPaused(r.Context()); err != nil || paused {
+		reply(w, http.StatusServiceUnavailable, "payouts are paused, try again later")
 		return
 	}
 
