@@ -5,11 +5,18 @@ import (
 	"net/http"
 )
 
+// Sendable describes what the paying node can send right now.
+type Sendable struct {
+	ActiveChannels int   // channels whose partner is connected: usable
+	TotalChannels  int   // all open channels, usable or not
+	Sat            int64 // our side of the usable channels
+}
+
 type ReceiverHealth interface {
 	Ping(ctx context.Context) error
 }
 type PayerHealth interface {
-	CanSendSat(ctx context.Context) (int64, error)
+	CanSend(ctx context.Context) (Sendable, error)
 }
 
 // Nodes reports whether each Lightning node is reachable with the key we hold.
@@ -32,12 +39,14 @@ func (n *Nodes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bob := map[string]any{"name": "bob", "job": "pays", "host": n.PayerHost, "key": "payment macaroon"}
-	if sat, err := n.Payer.CanSendSat(r.Context()); err != nil {
+	if s, err := n.Payer.CanSend(r.Context()); err != nil {
 		bob["connected"] = false
 		bob["problem"] = "node unreachable or key refused"
 	} else {
 		bob["connected"] = true
-		bob["can_send_sat"] = sat
+		bob["can_send_sat"] = s.Sat
+		bob["active_channels"] = s.ActiveChannels
+		bob["total_channels"] = s.TotalChannels
 	}
 	writeJSON(w, http.StatusOK, []map[string]any{alice, bob})
 }

@@ -3,8 +3,6 @@ package lnd
 import (
 	"context"
 	"encoding/hex"
-	"errors"
-	"math"
 	"time"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
@@ -13,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/rupeshkoushik07/ln-payment-go/internal/httpapi"
 	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
 	"github.com/rupeshkoushik07/ln-payment-go/internal/worker"
 )
@@ -27,20 +26,26 @@ func NewPayer(conn *grpc.ClientConn) *Payer {
 	return &Payer{router: routerrpc.NewRouterClient(conn), ln: lnrpc.NewLightningClient(conn)}
 }
 
-// CanSendSat asks the node how much it can send through its channels right now.
+// CanSend asks the node which of its channels are usable. A channel is open
+// on the blockchain all the time, but it can only carry a payment while the
+// two nodes are connected to each other ("active").
 // It doubles as a health check: an answer means the node is up and accepts our key.
-func (p *Payer) CanSendSat(ctx context.Context) (int64, error) {
+func (p *Payer) CanSend(ctx context.Context) (httpapi.Sendable, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	res, err := p.ln.ChannelBalance(ctx, &lnrpc.ChannelBalanceRequest{})
+	res, err := p.ln.ListChannels(ctx, &lnrpc.ListChannelsRequest{})
 	if err != nil {
-		return 0, err
+		return httpapi.Sendable{}, err
 	}
-	sat := res.GetLocalBalance().GetSat()
-	if sat > math.MaxInt64 {
-		return 0, errors.New("balance out of range")
+	var s httpapi.Sendable
+	for _, ch := range res.Channels {
+		s.TotalChannels++
+		if ch.Active {
+			s.ActiveChannels++
+			s.Sat += ch.LocalBalance
+		}
 	}
-	return int64(sat), nil
+	return s, nil
 }
 
 // Pay is call 1: "pay this invoice". It waits for the node's final answer.

@@ -75,7 +75,13 @@ function renderNodes(nodes) {
     add("Status", n.connected ? "connected to LND" : n.problem);
     add("Host", n.host);
     add("Key", n.key);
-    if (n.can_send_sat !== undefined) add("Can send", n.can_send_sat.toLocaleString() + " sats");
+    if (n.total_channels !== undefined) {
+      const ready = n.active_channels > 0;
+      add("Channels", n.active_channels + " of " + n.total_channels + " ready" +
+        (ready ? "" : " – partner not connected yet, payments will fail"));
+      add("Can send", n.can_send_sat.toLocaleString() + " sats");
+      if (!ready) dot.className = "dot warn";
+    }
     div.append(h3, dl); box.appendChild(div);
   }
 }
