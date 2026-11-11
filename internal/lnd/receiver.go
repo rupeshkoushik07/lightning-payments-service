@@ -21,6 +21,15 @@ func NewReceiver(conn *grpc.ClientConn) *Receiver {
 	return &Receiver{ln: lnrpc.NewLightningClient(conn)}
 }
 
+// Ping makes the cheapest call our key allows, to learn whether the node is
+// up and accepts us.
+func (r *Receiver) Ping(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	_, err := r.ln.ListInvoices(ctx, &lnrpc.ListInvoiceRequest{NumMaxInvoices: 1})
+	return err
+}
+
 // AddInvoice asks the node to create an invoice. The node invents the
 // secret and keeps it; we only get the hash and the invoice text back.
 func (r *Receiver) AddInvoice(ctx context.Context, amountSat int64, memo string, validFor time.Duration) (store.NewInvoice, error) {

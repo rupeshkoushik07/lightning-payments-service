@@ -112,6 +112,11 @@ func run(log *slog.Logger) error {
 	mux.Handle("GET /api/payments", auth.Require(httpapi.ListPayments(db)))
 	mux.Handle("GET /api/payments/{id}", auth.Require(httpapi.GetPayment(db)))
 
+	mux.Handle("GET /api/nodes", auth.Require(&httpapi.Nodes{
+		Receiver: receiver, ReceiverHost: mustEnv("ALICE_HOST"),
+		Payer: payer, PayerHost: mustEnv("BOB_HOST"),
+	}))
+
 	mux.Handle("GET /api/admin/payouts", auth.Require(httpapi.GetPause(db), "admin"))
 	mux.Handle("POST /api/admin/payouts", auth.Require(httpapi.SetPause(db), "admin"))
 

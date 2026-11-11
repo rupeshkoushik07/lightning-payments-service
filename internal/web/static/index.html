@@ -27,6 +27,11 @@
   </section>
 
   <div id="app" hidden>
+    <section class="card">
+      <h2>Lightning nodes <small>connected by the server at start-up; keys never reach the browser</small></h2>
+      <div id="nodes" class="nodes"></div>
+      <p class="flow">How a payment flows: alice's node creates an invoice → bob's node pays it → the money moves node to node → both nodes report back and the tables below update.</p>
+    </section>
     <section id="receive" class="card" hidden>
       <h2>Receive <small>alice's node</small></h2>
       <form id="invoice-form" class="row">

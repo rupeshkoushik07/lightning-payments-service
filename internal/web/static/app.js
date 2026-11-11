@@ -58,6 +58,27 @@ function fill(tbody, rows, build, cols) {
   }
   for (const r of rows) { const tr = document.createElement("tr"); build(tr, r); tbody.appendChild(tr); }
 }
+function renderNodes(nodes) {
+  const box = $("nodes");
+  box.replaceChildren();
+  for (const n of nodes) {
+    const div = document.createElement("div"); div.className = "node";
+    const h3 = document.createElement("h3");
+    const dot = document.createElement("span"); dot.className = "dot" + (n.connected ? " up" : "");
+    h3.append(dot, document.createTextNode(n.name + " · " + n.job));
+    const dl = document.createElement("dl");
+    const add = (k, v) => {
+      const dt = document.createElement("dt"); dt.textContent = k;
+      const dd = document.createElement("dd"); dd.textContent = v;
+      dl.append(dt, dd);
+    };
+    add("Status", n.connected ? "connected to LND" : n.problem);
+    add("Host", n.host);
+    add("Key", n.key);
+    if (n.can_send_sat !== undefined) add("Can send", n.can_send_sat.toLocaleString() + " sats");
+    div.append(h3, dl); box.appendChild(div);
+  }
+}
 const time = (iso) => new Date(iso).toLocaleTimeString();
 
 async function refresh() {
@@ -72,6 +93,7 @@ async function refresh() {
       tr.append(cell(v.amount_sat), pill(v.status), cell(v.payment_hash, "mono"),
         cell(v.paid_at ? "paid " + time(v.paid_at) : "expires " + time(v.expires_at)));
     }, 4);
+    renderNodes(await api("GET", "/api/nodes"));
     if (me.role === "admin") {
       const s = await api("GET", "/api/admin/payouts");
       $("pause-state").textContent = s.payouts_paused ? "PAUSED" : "running";

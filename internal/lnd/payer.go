@@ -3,6 +3,8 @@ package lnd
 import (
 	"context"
 	"encoding/hex"
+	"errors"
+	"math"
 	"time"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
@@ -18,10 +20,27 @@ import (
 // Payer gives orders to the paying node (bob).
 type Payer struct {
 	router routerrpc.RouterClient
+	ln     lnrpc.LightningClient
 }
 
 func NewPayer(conn *grpc.ClientConn) *Payer {
-	return &Payer{router: routerrpc.NewRouterClient(conn)}
+	return &Payer{router: routerrpc.NewRouterClient(conn), ln: lnrpc.NewLightningClient(conn)}
+}
+
+// CanSendSat asks the node how much it can send through its channels right now.
+// It doubles as a health check: an answer means the node is up and accepts our key.
+func (p *Payer) CanSendSat(ctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	res, err := p.ln.ChannelBalance(ctx, &lnrpc.ChannelBalanceRequest{})
+	if err != nil {
+		return 0, err
+	}
+	sat := res.GetLocalBalance().GetSat()
+	if sat > math.MaxInt64 {
+		return 0, errors.New("balance out of range")
+	}
+	return int64(sat), nil
 }
 
 // Pay is call 1: "pay this invoice". It waits for the node's final answer.
