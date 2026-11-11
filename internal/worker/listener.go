@@ -5,12 +5,20 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/lnd"
 	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
 )
 
+// InvoiceEvent is one message from the node about an invoice.
+type InvoiceEvent struct {
+	Invoice     store.NewInvoice
+	AddIndex    uint64
+	Paid        bool
+	SettleIndex uint64
+	PaidAt      time.Time
+}
+
 type InvoiceStream interface {
-	Subscribe(ctx context.Context, from store.Place, handle func(lnd.Event) error) error
+	Subscribe(ctx context.Context, from store.Place, handle func(InvoiceEvent) error) error
 }
 
 type InvoiceBook interface {
@@ -32,7 +40,7 @@ func (l *Listener) Run(ctx context.Context) {
 	for ctx.Err() == nil {
 		place, err := l.Invoices.ListenerPlace(ctx)
 		if err == nil {
-			err = l.Node.Subscribe(ctx, place, func(ev lnd.Event) error {
+			err = l.Node.Subscribe(ctx, place, func(ev InvoiceEvent) error {
 				// Make sure we have the invoice at all, then mark it paid if it is.
 				if err := l.Invoices.InvoiceSeen(ctx, ev.Invoice, ev.AddIndex); err != nil {
 					return err

@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/ln-payment-go/internal/worker"
 )
 
 // Receiver gives orders to the receiving node (alice).
@@ -41,18 +42,9 @@ func (r *Receiver) AddInvoice(ctx context.Context, amountSat int64, memo string,
 	}, nil
 }
 
-// Event is one message from the node about an invoice.
-type Event struct {
-	Invoice     store.NewInvoice
-	AddIndex    uint64
-	Paid        bool
-	SettleIndex uint64
-	PaidAt      time.Time
-}
-
 // Subscribe opens the long-lived line to the node and calls handle for every
 // invoice created or paid after the given place. It returns when the line breaks.
-func (r *Receiver) Subscribe(ctx context.Context, from store.Place, handle func(Event) error) error {
+func (r *Receiver) Subscribe(ctx context.Context, from store.Place, handle func(worker.InvoiceEvent) error) error {
 	stream, err := r.ln.SubscribeInvoices(ctx, &lnrpc.InvoiceSubscription{
 		AddIndex:    from.AddIndex,    // "replay every invoice created after this number"
 		SettleIndex: from.SettleIndex, // "replay every invoice paid after this number"
@@ -65,7 +57,7 @@ func (r *Receiver) Subscribe(ctx context.Context, from store.Place, handle func(
 		if err != nil {
 			return err
 		}
-		ev := Event{
+		ev := worker.InvoiceEvent{
 			Invoice: store.NewInvoice{
 				PaymentHash: inv.RHash,
 				Text:        inv.PaymentRequest,
