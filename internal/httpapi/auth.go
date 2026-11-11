@@ -85,7 +85,7 @@ func (a *Auth) startSession(w http.ResponseWriter, r *http.Request, user store.U
 	if err := a.Users.CreateSession(r.Context(), hashToken(token), user.ID, expires); err != nil {
 		return err
 	}
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 -- Secure follows COOKIE_SECURE: on under HTTPS, off only for http://localhost
 		Name:     sessionCookie,
 		Value:    token,
 		Path:     "/",
@@ -102,7 +102,7 @@ func (a *Auth) Logout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(sessionCookie); err == nil {
 		_ = a.Users.DeleteSession(r.Context(), hashToken(c.Value))
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: "", Path: "/", MaxAge: -1,
+	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: "", Path: "/", MaxAge: -1, // #nosec G124 -- Secure follows COOKIE_SECURE: on under HTTPS, off only for http://localhost
 		HttpOnly: true, SameSite: http.SameSiteStrictMode, Secure: a.SecureCookie})
 	w.WriteHeader(http.StatusNoContent)
 }

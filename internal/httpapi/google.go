@@ -59,7 +59,7 @@ func (g *Google) Start(w http.ResponseWriter, r *http.Request) {
 	//   state – proves the answer belongs to a sign-in this browser started
 	//   nonce – proves Google's note was made for this sign-in, not replayed
 	//   pkce  – proves the one collecting the note is the one who asked
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 -- Secure follows COOKIE_SECURE: on under HTTPS, off only for http://localhost
 		Name: flowCookie, Value: state + "." + nonce + "." + pkce,
 		Path: "/auth/google", MaxAge: 600, HttpOnly: true,
 		SameSite: http.SameSiteLaxMode, // must survive the trip back from Google
@@ -72,7 +72,7 @@ func (g *Google) Start(w http.ResponseWriter, r *http.Request) {
 func (g *Google) Callback(w http.ResponseWriter, r *http.Request) {
 	user, err := g.identify(r)
 	// The one-time values are used up, whatever happened.
-	http.SetCookie(w, &http.Cookie{Name: flowCookie, Value: "", Path: "/auth/google", MaxAge: -1,
+	http.SetCookie(w, &http.Cookie{Name: flowCookie, Value: "", Path: "/auth/google", MaxAge: -1, // #nosec G124 -- Secure follows COOKIE_SECURE: on under HTTPS, off only for http://localhost
 		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: g.Auth.SecureCookie})
 
 	switch {
