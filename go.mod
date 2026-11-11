@@ -8,6 +8,7 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/lightningnetwork/lnd v0.18.5-beta
+	golang.org/x/crypto v0.27.0
 	google.golang.org/grpc v1.65.0
 )
 
@@ -144,7 +145,6 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect

@@ -1,0 +1,29 @@
+:root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --dim:#667085; --line:#e3e6ea; --accent:#5b3fd6; --ok:#12805c; --warn:#b54708; --bad:#b42318; }
+@media (prefers-color-scheme: dark) { :root { --bg:#111418; --card:#1a1f25; --ink:#e8eaed; --dim:#98a2b3; --line:#2b323a; --accent:#9b87f5; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; }
+header { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid var(--line); }
+h1 { font-size:18px; margin:0; }
+.net { font-size:11px; font-weight:600; color:var(--warn); border:1px solid var(--warn); border-radius:999px; padding:1px 8px; margin-left:6px; vertical-align:middle; }
+main { max-width:980px; margin:0 auto; padding:16px; display:grid; gap:16px; }
+#app { display:grid; gap:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; overflow-x:auto; }
+.narrow { max-width:360px; margin:40px auto; width:100%; }
+h2 { font-size:16px; margin:0 0 12px; } h2 small { color:var(--dim); font-weight:400; }
+label { display:grid; gap:4px; font-size:13px; color:var(--dim); margin-bottom:10px; }
+input, textarea { font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:8px; width:100%; }
+textarea { font-family:ui-monospace, monospace; font-size:12px; word-break:break-all; }
+.row { display:flex; gap:12px; align-items:end; flex-wrap:wrap; } .row label { flex:1; min-width:140px; }
+button { font:inherit; font-weight:600; color:#fff; background:var(--accent); border:0; border-radius:6px; padding:9px 14px; cursor:pointer; margin-bottom:10px; }
+button.ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+button.danger { background:var(--bad); }
+button:disabled { opacity:.5; cursor:default; }
+.error { color:var(--bad); min-height:1em; margin:4px 0; } .note { color:var(--dim); font-size:13px; margin:4px 0; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--dim); font-weight:600; }
+td.mono { font-family:ui-monospace, monospace; font-size:11px; word-break:break-all; max-width:260px; }
+.pill { font-size:11px; font-weight:700; border-radius:999px; padding:2px 8px; border:1px solid currentColor; white-space:nowrap; }
+.SUCCEEDED, .PAID { color:var(--ok); } .FAILED, .EXPIRED { color:var(--bad); } .PENDING, .IN_FLIGHT, .OPEN { color:var(--warn); }
+#who { display:flex; gap:10px; align-items:center; } #who button { margin:0; }
+.empty { color:var(--dim); }

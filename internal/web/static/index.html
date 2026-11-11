@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ln-payment-go</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>ln-payment-go <span class="net">regtest</span></h1>
+  <div id="who" hidden>
+    <span id="who-name"></span>
+    <button id="logout" class="ghost">Sign out</button>
+  </div>
+</header>
+
+<main>
+  <section id="login" class="card narrow" hidden>
+    <h2>Sign in</h2>
+    <form id="login-form">
+      <label>Username <input id="username" autocomplete="username" required></label>
+      <label>Password <input id="password" type="password" autocomplete="current-password" required></label>
+      <button>Sign in</button>
+      <p id="login-error" class="error" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <section id="receive" class="card" hidden>
+      <h2>Receive <small>alice's node</small></h2>
+      <form id="invoice-form" class="row">
+        <label>Amount (sats) <input id="amount" type="number" min="1" value="1000" required></label>
+        <label>Memo <input id="memo" maxlength="200" placeholder="t-shirt"></label>
+        <button>Create invoice</button>
+      </form>
+      <p id="invoice-error" class="error" role="alert"></p>
+      <div id="new-invoice" hidden>
+        <p>Give this text to the payer:</p>
+        <textarea id="invoice-text" readonly rows="4"></textarea>
+        <button id="copy" class="ghost">Copy</button>
+      </div>
+    </section>
+
+    <section id="pay" class="card" hidden>
+      <h2>Pay <small>bob's node</small></h2>
+      <form id="pay-form">
+        <label>Invoice <textarea id="pay-invoice" rows="4" placeholder="lnbcrt…" required></textarea></label>
+        <button>Pay invoice</button>
+      </form>
+      <p id="pay-error" class="error" role="alert"></p>
+      <p id="pay-note" class="note"></p>
+    </section>
+
+    <section id="admin" class="card" hidden>
+      <h2>Operator</h2>
+      <p>Outgoing payments are <b id="pause-state">…</b>.</p>
+      <button id="pause-toggle" class="danger">…</button>
+      <p class="note">Pausing stops new payments. Payments already on their way still finish.</p>
+    </section>
+
+    <section class="card">
+      <h2>Payments sent</h2>
+      <table><thead><tr><th>#</th><th>Sats</th><th>Status</th><th>Payment hash</th><th>Receipt (preimage) / reason</th></tr></thead>
+      <tbody id="payments"></tbody></table>
+    </section>
+
+    <section class="card">
+      <h2>Invoices</h2>
+      <table><thead><tr><th>Sats</th><th>Status</th><th>Payment hash</th><th>Expires / paid</th></tr></thead>
+      <tbody id="invoices"></tbody></table>
+    </section>
+  </div>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

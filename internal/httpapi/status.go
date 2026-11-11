@@ -86,8 +86,7 @@ type PauseSetter interface {
 	SetPayoutsPaused(ctx context.Context, paused bool) error
 }
 
-// POST /admin/payouts   body: {"paused": true}
-// No sign-in yet: the server listens on this machine only. Sign-in comes later.
+// POST /api/admin/payouts   body: {"paused": true}   (admin only)
 func SetPause(db PauseSetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {

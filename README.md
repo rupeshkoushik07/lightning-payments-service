@@ -20,7 +20,8 @@ Status: work in progress. The server runs against Postgres (duplicates, pause, u
 | `migrations/001_payments.sql` | payments table and its rules |
 | `internal/payment` | status values and allowed moves |
 | `internal/store` | all Postgres access |
-| `internal/httpapi` | the HTTP endpoints |
+| `internal/httpapi` | the HTTP endpoints, sign-in and roles |
+| `internal/web` | the browser pages |
 | `internal/lnd` | all calls to the nodes; local invoice decoding |
 | `cmd/server` | the program: API plus workers |
 | `internal/worker` | sender, tracker, invoice listener |
@@ -33,27 +34,18 @@ Needs Go, Docker, and a started Polar network with two LND nodes (alice, bob) an
 scripts/run-polar.sh
 ```
 
-Then, in another terminal:
+Then open http://localhost:8080 and sign in. Three demo users exist: `alice` (receives), `bob` (pays), `admin` (both, plus the pause switch). Their passwords are in `.env`, which the script creates from `.env.example`.
 
-```bash
-# alice asks to be paid 1,000 sats
-curl -s -X POST localhost:8080/invoices -d '{"amount_sat":1000,"memo":"t-shirt"}'
+Try it in two browser windows: sign in as alice in one and create an invoice, sign in as bob in the other (a private window) and pay it. Both tables update by themselves.
 
-# bob pays the invoice text from the answer above
-curl -s -X POST localhost:8080/payments -d '{"invoice":"lnbcrt..."}'
-
-# poll the results
-curl -s localhost:8080/payments/1
-curl -s localhost:8080/invoices/<payment_hash>
-```
-
-| Endpoint | Does |
-|---|---|
-| `POST /invoices` | create an invoice on alice |
-| `GET /invoices/{hash}` | OPEN, PAID or EXPIRED |
-| `POST /payments` | accept an invoice to pay from bob; answers 202 |
-| `GET /payments/{id}` | PENDING, IN_FLIGHT, SUCCEEDED (with preimage) or FAILED |
-| `POST /admin/payouts` | `{"paused": true}` stops new payouts |
+| Endpoint | Who | Does |
+|---|---|---|
+| `POST /api/login`, `POST /api/logout`, `GET /api/me` | anyone | session sign-in |
+| `POST /api/invoices` | receiver, admin | create an invoice on alice |
+| `GET /api/invoices`, `GET /api/invoices/{hash}` | signed in | OPEN, PAID or EXPIRED |
+| `POST /api/payments` | payer, admin | accept an invoice to pay from bob; answers 202 |
+| `GET /api/payments`, `GET /api/payments/{id}` | signed in | PENDING, IN_FLIGHT, SUCCEEDED (with preimage) or FAILED |
+| `GET/POST /api/admin/payouts` | admin | read or flip the pause switch |
 
 ## Hardening
 

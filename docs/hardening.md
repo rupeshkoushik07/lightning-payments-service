@@ -23,6 +23,14 @@ Other protections already in the code: secrets are git-ignored, read from files 
 
 To do: container image scan when we add a Dockerfile. CodeQL once the repository is public (code scanning is free for public repositories).
 
+## Sign-in and sessions
+- Done: passwords are stored only as bcrypt hashes. A wrong password and an unknown user give the same answer and take the same time.
+- Done: the session cookie is a random 32-byte value; the database stores only its SHA-256, so a database leak does not hand out sessions. Cookie is HttpOnly and SameSite=Strict; sessions end after 8 hours or on sign-out.
+- Done: every route names the roles that may use it (receiver, payer, admin). The page hides buttons, but the server is what enforces it.
+- Done: state-changing requests from another website are refused (Origin check on top of SameSite).
+- Done: pages are served with a Content-Security-Policy of `default-src 'self'`; data is put on the page with `textContent`, never as HTML.
+- To do: limit repeated sign-in attempts; sign-in with Google or Microsoft (OpenID Connect); HTTPS and `COOKIE_SECURE=true` outside localhost.
+
 ## Data backup
 Two different things hold state, and they are backed up differently.
 - Postgres (our records): nightly full backup plus continuous WAL archiving, so we can restore to any minute (point-in-time recovery). Test the restore, not just the backup.
