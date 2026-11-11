@@ -1,0 +1,7 @@
+# secrets and local node files never go in git
+*.macaroon
+*.cert
+*.key
+.env
+/secrets/
+/bin/
