@@ -2,6 +2,7 @@ package lnd
 
 import (
 	"errors"
+	"math"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -39,11 +40,14 @@ func (d *Decoder) Decode(text string) (httpapi.Invoice, error) {
 	// The amount is written in thousandths of a satoshi. We only pay whole sats.
 	// An invoice with no amount stays at 0, and the API refuses it.
 	if inv.MilliSat != nil {
-		msat := int64(*inv.MilliSat)
+		msat := uint64(*inv.MilliSat)
+		if msat > math.MaxInt64 {
+			return httpapi.Invoice{}, errors.New("invoice amount is impossibly large")
+		}
 		if msat%1000 != 0 {
 			return httpapi.Invoice{}, errors.New("invoice amount is not a whole number of sats")
 		}
-		out.AmountSat = msat / 1000
+		out.AmountSat = int64(msat / 1000)
 	}
 	return out, nil
 }
