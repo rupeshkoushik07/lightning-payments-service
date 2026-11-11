@@ -92,6 +92,19 @@ func run(log *slog.Logger) error {
 		}
 	}
 
+	// A Google email can be linked to each demo user as well.
+	for _, u := range []struct{ name, role, envKey string }{
+		{"alice", "receiver", "ALICE_EMAIL"},
+		{"bob", "payer", "BOB_EMAIL"},
+		{"admin", "admin", "ADMIN_EMAIL"},
+	} {
+		if email := os.Getenv(u.envKey); email != "" {
+			if err := db.SetUserEmail(ctx, u.name, email, u.role); err != nil {
+				return err
+			}
+		}
+	}
+
 	// ---- 5. The API. Every route except sign-in needs a session,
 	//         and each route names the roles that may use it.
 	auth := &httpapi.Auth{Users: db, SecureCookie: env("COOKIE_SECURE", "false") == "true"}
@@ -99,6 +112,29 @@ func run(log *slog.Logger) error {
 	mux.HandleFunc("POST /api/login", auth.Login)
 	mux.HandleFunc("POST /api/logout", auth.Logout)
 	mux.Handle("GET /api/me", auth.Require(http.HandlerFunc(auth.Me)))
+
+	// Sign in with Google, only when a client ID and secret are configured.
+	googleOn := false
+	if id, secret := os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"); id != "" && secret != "" {
+		setupCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		google, err := httpapi.NewGoogle(setupCtx, id, secret, env("PUBLIC_URL", "http://localhost:8080"), db, auth)
+		cancel()
+		if err != nil {
+			log.Warn("google sign-in is off: could not reach Google", "err", err)
+		} else {
+			mux.HandleFunc("GET /auth/google/start", google.Start)
+			mux.HandleFunc("GET /auth/google/callback", google.Callback)
+			googleOn = true
+		}
+	}
+	mux.HandleFunc("GET /api/signin-options", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if googleOn {
+			_, _ = w.Write([]byte(`{"google":true}`))
+		} else {
+			_, _ = w.Write([]byte(`{"google":false}`))
+		}
+	})
 
 	mux.Handle("POST /api/invoices", auth.Require(
 		&httpapi.InvoiceHandler{Node: receiver, Invoices: db, MaxAmountSat: maxAmount, ValidFor: time.Hour},

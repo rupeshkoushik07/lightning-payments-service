@@ -36,6 +36,8 @@ scripts/run-polar.sh
 
 Then open http://localhost:8080 and sign in. Three demo users exist: `alice` (receives), `bob` (pays), `admin` (both, plus the pause switch). Their passwords are in `.env`, which the script creates from `.env.example`.
 
+To switch on **Sign in with Google**, fill in `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `ADMIN_EMAIL` in `.env` (see `.env.example`).
+
 Try it in two browser windows: sign in as alice in one and create an invoice, sign in as bob in the other (a private window) and pay it. Both tables update by themselves.
 
 | Endpoint | Who | Does |

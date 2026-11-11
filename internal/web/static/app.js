@@ -144,5 +144,17 @@ $("pause-toggle").addEventListener("click", async () => {
   refresh();
 });
 
+// Show the Google button only if the server has Google sign-in configured.
+fetch("/api/signin-options").then((r) => r.json()).then((o) => { $("google-box").hidden = !o.google; }).catch(() => {});
+
+// Coming back from a Google sign-in that did not work.
+const signin = new URLSearchParams(location.search).get("signin");
+if (signin) {
+  $("login-error").textContent = signin === "not_allowed"
+    ? "That Google account is not registered here."
+    : "Google sign-in did not complete. Please try again.";
+  history.replaceState(null, "", "/");
+}
+
 // On page load: are we already signed in?
 api("GET", "/api/me").then(showApp).catch(showLogin);

@@ -65,17 +65,25 @@ func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The cookie holds a long random value. The database holds only its hash.
-	raw := make([]byte, 32)
-	if _, err := rand.Read(raw); err != nil {
+	if err := a.startSession(w, r, user); err != nil {
 		reply(w, http.StatusInternalServerError, "could not sign in")
 		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"username": user.Username, "role": user.Role})
+}
+
+// startSession is the same for every way of signing in: once we know who the
+// person is, give their browser a ticket.
+// The cookie holds a long random value. The database holds only its hash.
+func (a *Auth) startSession(w http.ResponseWriter, r *http.Request, user store.User) error {
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return err
 	}
 	token := base64.RawURLEncoding.EncodeToString(raw)
 	expires := time.Now().Add(sessionLife)
 	if err := a.Users.CreateSession(r.Context(), hashToken(token), user.ID, expires); err != nil {
-		reply(w, http.StatusInternalServerError, "could not sign in")
-		return
+		return err
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookie,
@@ -86,7 +94,7 @@ func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode, // other sites cannot send it
 		Secure:   a.SecureCookie,
 	})
-	writeJSON(w, http.StatusOK, map[string]string{"username": user.Username, "role": user.Role})
+	return nil
 }
 
 // POST /api/logout
