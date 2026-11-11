@@ -3,7 +3,7 @@
 A small Go service that sits next to two Lightning (LND) nodes: one receives ("alice"), one pays ("bob").
 It creates invoices, pays invoices, and keeps a correct record of every payment, including when things fail.
 
-Status: work in progress. The server runs against Postgres (duplicates, pause, unreachable node and clean shutdown checked by hand). A full payment through real nodes is the next step.
+Status: works end to end on regtest. Real payments between two LND nodes, and the failure cases in the test report, have been run by hand. Automated tests for those cases are still to be written.
 
 ## Design rules
 
@@ -48,6 +48,10 @@ Try it in two browser windows: sign in as alice in one and create an invoice, si
 | `POST /api/payments` | payer, admin | accept an invoice to pay from bob; answers 202 |
 | `GET /api/payments`, `GET /api/payments/{id}` | signed in | PENDING, IN_FLIGHT, SUCCEEDED (with preimage) or FAILED |
 | `GET/POST /api/admin/payouts` | admin | read or flip the pause switch |
+
+## Failure tests
+
+What happens when the paying node is down, the service is killed mid-payment, a request is repeated, or payouts are paused: see [docs/test-report.md](docs/test-report.md).
 
 ## Hardening
 
