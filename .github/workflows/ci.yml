@@ -2,19 +2,52 @@ name: ci
 on: [push, pull_request]
 permissions:
   contents: read
+
 jobs:
-  check:
+  test:
+    name: build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - name: vet
-        run: go vet ./...
-      - name: test (with race detector)
-        run: go test -race ./...
-      - name: known vulnerabilities in our code and dependencies
+        with: { go-version: stable }
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  sast:
+    name: static analysis (our own code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: stable }
+      - name: staticcheck (bugs and suspicious code)
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
+      - name: gosec (security mistakes in our code)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec ./...
+
+  sca:
+    name: dependency scan (other people's code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: stable }
+      - name: govulncheck (known vulnerabilities we actually call)
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
+
+  secrets:
+    name: secret scan (keys committed by mistake)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

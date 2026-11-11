@@ -7,11 +7,21 @@ What protects this service beyond the happy path. "Done" means it is in the code
 - Done: request bodies are size-limited and the invoice is decoded and validated before it reaches the database.
 - Rule for reviews: no `fmt.Sprintf` or string `+` to build SQL.
 
-## Vulnerabilities
-- Done: CI runs `go vet`, tests with the race detector, and `govulncheck` (known CVEs in our dependencies that our code actually calls).
-- Done: secrets (macaroons, certificates, `.env`) are git-ignored; keys are read from files at startup and never logged.
-- Done: least-privilege macaroons; macaroon is refused on an unencrypted connection.
-- To do: dependency update bot; container image scan when we add a Dockerfile.
+## Security checks in CI
+Four jobs run on every push.
+
+| Job | Kind | Tool | Looks at | Finds |
+|---|---|---|---|---|
+| build and test | - | `go vet`, `go test -race` | our code, running | broken code, data races |
+| static analysis | SAST | `staticcheck`, `gosec` | our code, without running it | bugs, SQL built from strings, weak crypto, unchecked errors, hardcoded secrets |
+| dependency scan | SCA | `govulncheck` | Go itself and the libraries we import | known vulnerabilities (CVEs) that our code actually reaches |
+| secret scan | - | `gitleaks` | every commit in history | keys or passwords committed by mistake |
+
+Also: Dependabot opens a pull request weekly when a library or a CI action has a newer version.
+
+Other protections already in the code: secrets are git-ignored, read from files at startup and never logged; least-privilege macaroons; the macaroon is refused on an unencrypted connection.
+
+To do: container image scan when we add a Dockerfile. CodeQL once the repository is public (code scanning is free for public repositories).
 
 ## Data backup
 Two different things hold state, and they are backed up differently.
