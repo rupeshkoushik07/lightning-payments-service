@@ -13,7 +13,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
 const flowCookie = "google_flow"

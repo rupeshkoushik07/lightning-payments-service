@@ -11,7 +11,7 @@ import (
 
 	"github.com/lightningnetwork/lnd/lnrpc"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/lnd"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/lnd"
 )
 
 func main() {

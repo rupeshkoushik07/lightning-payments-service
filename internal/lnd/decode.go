@@ -8,7 +8,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/lightningnetwork/lnd/zpay32"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/httpapi"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/httpapi"
 )
 
 // Decoder reads an invoice text ourselves. It calls no node and needs no key:

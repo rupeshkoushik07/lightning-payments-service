@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
 type Reader interface {

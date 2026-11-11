@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
 // Outcome is the node's answer about one payment.

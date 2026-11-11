@@ -1,4 +1,4 @@
-# ln-payment-go
+# Lightning Payments Service
 
 ![The service connected to two LND nodes](docs/img/dashboard.webp)
 

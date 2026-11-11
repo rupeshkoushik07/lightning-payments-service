@@ -1,4 +1,4 @@
-module github.com/rupeshkoushik07/ln-payment-go
+module github.com/rupeshkoushik07/lightning-payments-service
 
 go 1.23.4
 

@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/httpapi"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/worker"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/httpapi"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/worker"
 )
 
 // Payer gives orders to the paying node (bob).

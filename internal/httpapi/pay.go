@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
 // Invoice is what we read out of the invoice text.

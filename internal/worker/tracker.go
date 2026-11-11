@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
 // notFoundGrace is how old a row must be before we believe

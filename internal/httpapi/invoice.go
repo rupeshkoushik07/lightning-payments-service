@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
 type InvoiceMaker interface {

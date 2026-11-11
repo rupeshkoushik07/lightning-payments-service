@@ -15,12 +15,12 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/httpapi"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/lnd"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/web"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/worker"
-	"github.com/rupeshkoushik07/ln-payment-go/migrations"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/httpapi"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/lnd"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/web"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/worker"
+	"github.com/rupeshkoushik07/lightning-payments-service/migrations"
 )
 
 func main() {

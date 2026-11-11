@@ -7,8 +7,8 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"google.golang.org/grpc"
 
-	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
-	"github.com/rupeshkoushik07/ln-payment-go/internal/worker"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/worker"
 )
 
 // Receiver gives orders to the receiving node (alice).
