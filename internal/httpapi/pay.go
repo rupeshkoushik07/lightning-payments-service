@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/rupeshkoushik07/ln-payment-go/internal/store"
@@ -76,13 +77,19 @@ func (h *PayHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. Answer now. A worker pays in the background.
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]any{"id": id, "status": "PENDING"})
+	writeJSON(w, http.StatusAccepted, map[string]any{"id": id, "status": "PENDING"})
 }
 
 func reply(w http.ResponseWriter, code int, msg string) {
+	writeJSON(w, code, map[string]string{"error": msg})
+}
+
+// writeJSON sends the answer. If writing fails the client has gone away;
+// we log it, because there is no one left to tell.
+func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		slog.Warn("could not write response", "err", err)
+	}
 }
