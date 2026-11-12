@@ -3,8 +3,11 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -72,14 +75,31 @@ func run(log *slog.Logger) error {
 	receiver := lnd.NewReceiver(aliceConn)
 	payer := lnd.NewPayer(bobConn)
 
-	// ---- 4. People who may sign in. Passwords come from the environment once,
-	//         and only their bcrypt hashes are stored.
+	// ---- 4. People who may sign in.
+	// Normal mode: passwords come from the environment once, and only their
+	// bcrypt hashes are stored.
+	// Demo mode (DEMO_LOGIN=true): no passwords exist anywhere. The page shows
+	// one button per user. Allowed only when the server listens on this
+	// machine, so nobody else on the network can reach those buttons.
+	listenAddr := env("LISTEN_ADDR", "127.0.0.1:8080")
+	demo := env("DEMO_LOGIN", "false") == "true"
+	if demo && !isLoopback(listenAddr) {
+		return errors.New("DEMO_LOGIN=true is only allowed when LISTEN_ADDR is on 127.0.0.1 or localhost")
+	}
 	for _, u := range []struct{ name, role, envKey string }{
 		{"alice", "receiver", "ALICE_PASSWORD"},
 		{"bob", "payer", "BOB_PASSWORD"},
 		{"admin", "admin", "ADMIN_PASSWORD"},
 	} {
 		pw := os.Getenv(u.envKey)
+		if demo {
+			// A long random password nobody knows: the password door stays shut.
+			raw := make([]byte, 32)
+			if _, err := rand.Read(raw); err != nil {
+				return err
+			}
+			pw = hex.EncodeToString(raw)
+		}
 		if pw == "" {
 			continue
 		}
@@ -94,9 +114,11 @@ func run(log *slog.Logger) error {
 
 	// ---- 5. The API. Every route except sign-in needs a session,
 	//         and each route names the roles that may use it.
-	auth := &httpapi.Auth{Users: db, SecureCookie: env("COOKIE_SECURE", "false") == "true"}
+	auth := &httpapi.Auth{Users: db, SecureCookie: env("COOKIE_SECURE", "false") == "true", Demo: demo}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/login", auth.Login)
+	mux.HandleFunc("GET /api/demo", auth.DemoInfo)
+	mux.HandleFunc("POST /api/demo-login", auth.DemoLogin)
 	mux.HandleFunc("POST /api/logout", auth.Logout)
 	mux.Handle("GET /api/me", auth.Require(http.HandlerFunc(auth.Me)))
 
@@ -124,7 +146,7 @@ func run(log *slog.Logger) error {
 	mux.Handle("GET /", web.Handler()) // the browser pages
 
 	srv := &http.Server{
-		Addr:              env("LISTEN_ADDR", "127.0.0.1:8080"), // this machine only
+		Addr:              listenAddr, // this machine only, by default
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -239,4 +261,17 @@ func mustEnv(key string) string {
 		os.Exit(1)
 	}
 	return v
+}
+
+// isLoopback reports whether addr ("host:port") can only be reached from this machine.
+func isLoopback(addr string) bool {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return false
+	}
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }

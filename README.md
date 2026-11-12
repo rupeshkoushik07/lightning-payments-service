@@ -62,13 +62,13 @@ cd lightning-payments-service
 scripts/run-polar.sh
 ```
 
-The script does three things: creates `.env` with demo sign-in passwords (copied from `.env.example`), starts a PostgreSQL container named `lnpay-pg` on port 55432, and runs the server pointed at alice and bob. The database tables are created automatically on first start.
+The script does three things: turns on demo sign-in, starts a PostgreSQL container named `lnpay-pg` on port 55432, and runs the server pointed at alice and bob. The database tables are created automatically on first start.
 
 If your Polar network is not number 1, pass its number: `POLAR_NET=2 scripts/run-polar.sh`.
 
 ### Step 3: sign in and make a payment
 
-Open http://localhost:8080. Three demo users exist; their passwords are in the `.env` file the script created.
+Open http://localhost:8080. The sign-in page shows one button per demo user; click one to enter. There are no passwords to set up and none in this repository.
 
 | User | Can do |
 |---|---|
@@ -76,9 +76,15 @@ Open http://localhost:8080. Three demo users exist; their passwords are in the `
 | `bob` | pay invoices |
 | `admin` | both, plus the pause switch |
 
-1. In one browser window, sign in as **alice** and create an invoice for 1,000 sats. Copy the invoice text (it starts with `lnbcrt`).
-2. In a private window, sign in as **bob**, paste the invoice and click **Pay**.
+1. In one browser window, click **alice (receiver)** and create an invoice for 1,000 sats. Copy the invoice text (it starts with `lnbcrt`).
+2. In a private window, click **bob (payer)**, paste the invoice and click **Pay**.
 3. Watch both tables: bob's payment goes PENDING → IN_FLIGHT → SUCCEEDED, and alice's invoice goes OPEN → PAID. In Polar, the channel balance moves by 1,000 sats.
+
+### About demo sign-in
+
+Demo sign-in (`DEMO_LOGIN=true`) skips the password only. Everything after it is the real thing: a random session token in an HttpOnly cookie, a role checked on every route (bob cannot create invoices, alice cannot pay), and the same-origin check. The server refuses to start in demo mode unless it listens on this machine only (`127.0.0.1` or `localhost`), so the buttons cannot be reached from the network.
+
+Without `DEMO_LOGIN`, the buttons do not exist and the server uses password sign-in: set `ALICE_PASSWORD`, `BOB_PASSWORD` and `ADMIN_PASSWORD` in the environment (at least 8 characters each); only their bcrypt hashes are stored.
 
 ### Stop and clean up
 
@@ -96,7 +102,7 @@ docker rm -f lnpay-pg
 | "Channels: 0 of 1 ready", payments fail with insufficient balance | LND is waiting for a recent block | In Polar: Bitcoin node → Quick Mine, and turn on Auto Mine |
 | `no such file ... tls.cert` | Polar keeps its files somewhere else, or the nodes have other names | Check `~/.polar/networks/<number>/volumes/lnd/` has `alice` and `bob` |
 | `address already in use` | Port 8080 or 55432 is taken | `LISTEN_ADDR=127.0.0.1:8090 scripts/run-polar.sh`, or stop the other program |
-| Sign-in fails | Wrong password | Use the values in `.env` |
+| No demo buttons, a password form instead | The server was started without `DEMO_LOGIN=true` | Start it with `scripts/run-polar.sh` |
 
 ### Run the tests only
 

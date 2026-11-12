@@ -18,6 +18,13 @@
 <main>
   <section id="login" class="card narrow" hidden>
     <h2>Sign in</h2>
+    <div id="demo-login" hidden>
+      <p class="muted">Local demo with play money. Choose who you are:</p>
+      <button type="button" data-demo="alice">alice (receiver)</button>
+      <button type="button" data-demo="bob">bob (payer)</button>
+      <button type="button" data-demo="admin">admin (operator)</button>
+      <p id="demo-error" class="error" role="alert"></p>
+    </div>
     <form id="login-form">
       <label>Username <input id="username" autocomplete="username" required></label>
       <label>Password <input id="password" type="password" autocomplete="current-password" required></label>

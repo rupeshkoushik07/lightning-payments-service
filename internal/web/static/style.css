@@ -37,3 +37,5 @@ td.mono { font-family:ui-monospace, monospace; font-size:11px; word-break:break-
 .node dl { margin:0; display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:13px; }
 .node dt { color:var(--dim); } .node dd { margin:0; word-break:break-all; }
 .flow { color:var(--dim); font-size:13px; margin:10px 0 0; }
+.muted { color:#667; margin:0 0 12px; }
+#demo-login button { display:block; width:100%; }

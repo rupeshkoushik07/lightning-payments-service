@@ -4,12 +4,10 @@
 #        POLAR_NET=2 scripts/run-polar.sh
 set -euo pipefail
 
-# Sign-in passwords for the demo users live in .env (git-ignored).
-if [ ! -f .env ]; then
-  cp .env.example .env
-  echo "Created .env from .env.example. Change the passwords in it if you like."
-fi
-set -a; . ./.env; set +a
+# Local play-money demo: no passwords anywhere. The sign-in page shows one
+# button per user (alice, bob, admin). The server only allows this while it
+# listens on this machine.
+export DEMO_LOGIN=true
 
 NET="${POLAR_NET:-1}"
 LND="$HOME/.polar/networks/$NET/volumes/lnd"

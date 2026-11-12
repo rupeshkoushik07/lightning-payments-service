@@ -34,6 +34,54 @@ type UserStore interface {
 type Auth struct {
 	Users        UserStore
 	SecureCookie bool // true when served over HTTPS
+	// Demo is on only for a local play-money setup: the sign-in page shows one
+	// button per demo user and no password is asked. main refuses to turn it
+	// on unless the server listens on this machine only.
+	Demo bool
+}
+
+// The only accounts the demo buttons may open.
+var demoUsers = []string{"alice", "bob", "admin"}
+
+// GET /api/demo   tells the sign-in page whether to show the demo buttons.
+func (a *Auth) DemoInfo(w http.ResponseWriter, _ *http.Request) {
+	if !a.Demo {
+		reply(w, http.StatusNotFound, "demo sign-in is off")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string][]string{"users": demoUsers})
+}
+
+// POST /api/demo-login   body: {"username": "alice"}
+// Off (404) unless Demo is set. Sessions and roles work exactly as usual
+// afterwards: bob still cannot create invoices, alice still cannot pay.
+func (a *Auth) DemoLogin(w http.ResponseWriter, r *http.Request) {
+	if !a.Demo {
+		reply(w, http.StatusNotFound, "demo sign-in is off")
+		return
+	}
+	if !sameOrigin(r) {
+		reply(w, http.StatusForbidden, "request came from another site")
+		return
+	}
+	var body struct {
+		Username string `json:"username"`
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || !slices.Contains(demoUsers, body.Username) {
+		reply(w, http.StatusBadRequest, "username must be alice, bob or admin")
+		return
+	}
+	user, _, err := a.Users.UserForLogin(r.Context(), body.Username)
+	if err != nil {
+		reply(w, http.StatusInternalServerError, "could not sign in")
+		return
+	}
+	if err := a.startSession(w, r, user); err != nil {
+		reply(w, http.StatusInternalServerError, "could not sign in")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"username": user.Username, "role": user.Role})
 }
 
 // A hash to compare against when the username does not exist, so that

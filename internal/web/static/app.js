@@ -11,7 +11,7 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = res.status === 204 ? null : await res.json().catch(() => null);
-  if (res.status === 401 && path !== "/api/login") { showLogin(); }
+  if (res.status === 401 && path !== "/api/login" && path !== "/api/demo-login") { showLogin(); }
   if (!res.ok) { throw new Error((data && data.error) || "request failed (" + res.status + ")"); }
   return data;
 }
@@ -117,6 +117,20 @@ $("login-form").addEventListener("submit", async (ev) => {
     $("password").value = "";
     showApp(user);
   } catch (e) { $("login-error").textContent = e.message; }
+});
+
+// Demo mode: the server says whether one-click sign-in is on. If it is,
+// show the three buttons and hide the password form.
+fetch("/api/demo").then((res) => {
+  if (!res.ok) { return; }
+  $("demo-login").hidden = false; $("login-form").hidden = true;
+});
+document.querySelectorAll("[data-demo]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    $("demo-error").textContent = "";
+    try { showApp(await api("POST", "/api/demo-login", { username: btn.dataset.demo })); }
+    catch (e) { $("demo-error").textContent = e.message; }
+  });
 });
 
 $("logout").addEventListener("click", async () => { await api("POST", "/api/logout").catch(() => {}); showLogin(); });
