@@ -11,7 +11,7 @@ jobs:
     name: build and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with: { go-version: stable }
       - run: go vet ./...
@@ -21,7 +21,7 @@ jobs:
     name: static analysis (our own code)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with: { go-version: stable }
       - name: staticcheck (bugs and suspicious code)
@@ -37,7 +37,7 @@ jobs:
     name: dependency scan (other people's code)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with: { go-version: stable }
       - name: govulncheck (known vulnerabilities we actually call)
@@ -52,7 +52,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: gitleaks/gitleaks-action@v2
         env:
