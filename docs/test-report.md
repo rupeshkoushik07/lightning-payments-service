@@ -1,6 +1,6 @@
 # Test report
 
-Three kinds of test were run: failure tests by hand on real Lightning nodes, a load test of the API, and the automatic checks in CI. This page says what was done, what happened, and what it does not cover.
+Four kinds of test were run: failure tests by hand on real Lightning nodes, a load test of the API, automatic tests, and the automatic checks in CI. This page says what was done, what happened, and what it does not cover.
 
 ## The cases the design had to survive
 
@@ -108,8 +108,22 @@ What would raise the ceiling, in order: a larger database pool, caching the paus
 
 Not tested: sustained load over hours, load with real nodes paying, behaviour when the database is slow or full.
 
-## 3. Automatic checks (CI)
+## 3. Automatic tests
+
+`go test ./...` runs about 30 cases. The node and the database are replaced by small fakes, so the tests need nothing installed and run in seconds.
+
+| Area | Cases |
+|---|---|
+| sender | node error → payment stays open; no final answer → stays open; success → saved with preimage; failure → saved with reason; result saved even during shutdown; paused → nothing claimed or paid; pause switch unreadable → nothing claimed or paid |
+| tracker | succeeded; failed; not found and old → failed; not found but fresh → wait; still trying → wait; node unreachable → change nothing |
+| pay endpoint | accepted; paused; pause unreadable; body not JSON; not an invoice; expired; over the limit; no amount; already being paid; database error |
+| invoice decoding | reads hash and amount; expired; wrong network; fraction of a sat; rubbish |
+| status rules | every allowed and forbidden change |
+
+Not covered by automatic tests: the SQL itself (unique index, claim query, transactions) and the real LND calls. Those were exercised by the manual tests and the load test.
+
+## 4. Automatic checks (CI)
 
 Every push runs: build and unit tests with the race detector; static analysis of our code (`staticcheck`, `gosec`); a scan of dependencies for known vulnerabilities (`govulncheck`); a scan of the history for committed secrets (`gitleaks`).
 
-Found and fixed by static analysis so far: unhandled errors when writing responses; a possible integer overflow when converting an invoice amount. The dependency scan currently reports outdated libraries that still need upgrading.
+Found and fixed by static analysis so far: unhandled errors when writing responses; a possible integer overflow when converting an invoice amount; unhandled errors when closing response bodies in the load tool. One finding was reviewed and kept with a written reason: the session cookie's HTTPS-only flag is configurable so the app works on http://localhost. The dependency scan currently reports outdated libraries that still need upgrading.

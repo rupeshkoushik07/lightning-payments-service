@@ -30,7 +30,7 @@ func (s *Store) UserForLogin(ctx context.Context, username string) (User, string
 	err := s.db.QueryRow(ctx, `SELECT id, username, role, password_hash FROM users WHERE username = $1`, username).
 		Scan(&u.ID, &u.Username, &u.Role, &hash)
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && hash == nil) {
-		return u, "", ErrNotFound // no such user, or a Google-only user with no password
+		return u, "", ErrNotFound // no such user, or a user with no password set
 	}
 	if err != nil {
 		return u, "", err
@@ -106,24 +106,4 @@ func (s *Store) ListInvoices(ctx context.Context, limit int) ([]InvoiceView, err
 		out = append(out, v)
 	}
 	return out, rows.Err()
-}
-
-// SetUserEmail links a Google email to a role. The user is created if missing.
-func (s *Store) SetUserEmail(ctx context.Context, username, email, role string) error {
-	_, err := s.db.Exec(ctx, `
-		INSERT INTO users (username, email, role) VALUES ($1, $2, $3)
-		ON CONFLICT (username) DO UPDATE SET email = $2, role = $3`,
-		username, email, role)
-	return err
-}
-
-// UserByEmail finds the user a verified Google email belongs to.
-func (s *Store) UserByEmail(ctx context.Context, email string) (User, error) {
-	var u User
-	err := s.db.QueryRow(ctx, `SELECT id, username, role FROM users WHERE lower(email) = lower($1)`, email).
-		Scan(&u.ID, &u.Username, &u.Role)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return u, ErrNotFound
-	}
-	return u, err
 }

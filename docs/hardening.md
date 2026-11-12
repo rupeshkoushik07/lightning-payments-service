@@ -29,8 +29,7 @@ To do: container image scan when we add a Dockerfile. CodeQL once the repository
 - Done: every route names the roles that may use it (receiver, payer, admin). The page hides buttons, but the server is what enforces it.
 - Done: state-changing requests from another website are refused (Origin check on top of SameSite).
 - Done: pages are served with a Content-Security-Policy of `default-src 'self'`; data is put on the page with `textContent`, never as HTML.
-- Done: sign-in with Google (OpenID Connect, authorization-code flow with PKCE). We check `state` (the answer belongs to a sign-in this browser started), `nonce` (the ID token was made for this sign-in), the token's signature, issuer, audience and expiry, and that Google has verified the email. Google says who the person is; our users table decides whether they are let in and with which role. An unknown Google account gets nothing.
-- To do: limit repeated sign-in attempts; Microsoft as a second provider (same code path, different issuer); HTTPS and `COOKIE_SECURE=true` outside localhost.
+- To do: limit repeated sign-in attempts; sign-in with Google or Microsoft (OpenID Connect), which would replace only the password check and leave sessions and roles as they are; HTTPS and `COOKIE_SECURE=true` outside localhost.
 
 ## Data backup
 Two different things hold state, and they are backed up differently.
