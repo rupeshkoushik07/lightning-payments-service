@@ -28,17 +28,85 @@ Status: works end to end on regtest. Real payments between two LND nodes, and th
 | `cmd/server` | the program: API plus workers |
 | `internal/worker` | sender, tracker, invoice listener |
 
-## Run against Polar
+## How to run it
 
-Needs Go, Docker, and a started Polar network with two LND nodes (alice, bob) and a channel from bob to alice.
+Everything runs on your own machine with play money (Bitcoin "regtest"). No real funds are involved.
+
+### What you need
+
+| Tool | Why | Check |
+|---|---|---|
+| [Go](https://go.dev/dl/) 1.23 or newer | builds and runs the server | `go version` |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | runs the Lightning nodes and the database | `docker ps` |
+| [Polar](https://lightningpolar.com/) | starts a private Lightning network in Docker | open the app |
+
+### Step 1: create the Lightning network in Polar
+
+1. Open Polar and click **Create Network**. Choose **2 LND nodes** and **1 Bitcoin Core node**. Polar names the nodes `alice` and `bob`.
+2. Click **Start** and wait until all three nodes are green.
+3. Give bob money: click **bob**, then **Actions**, then **Deposit** (1,000,000 sats is plenty).
+4. Open a channel from bob to alice: drag from bob to alice (or **bob → Actions → Open Channel → Outgoing**), capacity 250,000 sats.
+5. Click the Bitcoin node, then **Actions → Quick Mine**, and turn on **Auto Mine (30s)**. LND only works while new blocks keep arriving.
+
+### Step 2: get the code and start the server
+
+```bash
+git clone https://github.com/rupeshkoushik07/lightning-payments-service.git
+```
+
+```bash
+cd lightning-payments-service
+```
 
 ```bash
 scripts/run-polar.sh
 ```
 
-Then open http://localhost:8080 and sign in. Three demo users exist: `alice` (receives), `bob` (pays), `admin` (both, plus the pause switch). Their passwords are in `.env`, which the script creates from `.env.example`.
+The script does three things: creates `.env` with demo sign-in passwords (copied from `.env.example`), starts a PostgreSQL container named `lnpay-pg` on port 55432, and runs the server pointed at alice and bob. The database tables are created automatically on first start.
 
-Try it in two browser windows: sign in as alice in one and create an invoice, sign in as bob in the other (a private window) and pay it. Both tables update by themselves.
+If your Polar network is not number 1, pass its number: `POLAR_NET=2 scripts/run-polar.sh`.
+
+### Step 3: sign in and make a payment
+
+Open http://localhost:8080. Three demo users exist; their passwords are in the `.env` file the script created.
+
+| User | Can do |
+|---|---|
+| `alice` | create invoices (receive) |
+| `bob` | pay invoices |
+| `admin` | both, plus the pause switch |
+
+1. In one browser window, sign in as **alice** and create an invoice for 1,000 sats. Copy the invoice text (it starts with `lnbcrt`).
+2. In a private window, sign in as **bob**, paste the invoice and click **Pay**.
+3. Watch both tables: bob's payment goes PENDING → IN_FLIGHT → SUCCEEDED, and alice's invoice goes OPEN → PAID. In Polar, the channel balance moves by 1,000 sats.
+
+### Stop and clean up
+
+Press `Ctrl+C` in the terminal to stop the server (it finishes in-flight work first). To remove the database:
+
+```bash
+docker rm -f lnpay-pg
+```
+
+### If something does not work
+
+| What you see | Cause | Fix |
+|---|---|---|
+| Node panel shows a red dot | Polar network is not started, or a different network number | Start the network in Polar; use `POLAR_NET=<number>` |
+| "Channels: 0 of 1 ready", payments fail with insufficient balance | LND is waiting for a recent block | In Polar: Bitcoin node → Quick Mine, and turn on Auto Mine |
+| `no such file ... tls.cert` | Polar keeps its files somewhere else, or the nodes have other names | Check `~/.polar/networks/<number>/volumes/lnd/` has `alice` and `bob` |
+| `address already in use` | Port 8080 or 55432 is taken | `LISTEN_ADDR=127.0.0.1:8090 scripts/run-polar.sh`, or stop the other program |
+| Sign-in fails | Wrong password | Use the values in `.env` |
+
+### Run the tests only
+
+No Lightning nodes needed:
+
+```bash
+go test ./...
+```
+
+### API
 
 | Endpoint | Who | Does |
 |---|---|---|
