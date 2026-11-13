@@ -1,5 +1,31 @@
 # Lightning Payments Service
 
+## Monitoring: Prometheus and Grafana on a real regtest run
+
+Run on 13 Nov 2026: bitcoind and two LND nodes started by `scripts/regtest-local.sh`, 30 payments from bob to alice through the API, and 6 double-pay attempts. Prometheus scraped the service every 5 seconds and Grafana drew the dashboard.
+
+| What | Result |
+|---|---|
+| Payments | 30 of 30 SUCCEEDED, p95 time for the Pay call about 240 ms |
+| Double payments | 6 attempts, 6 refused with 409 |
+| Books | 250,000 sats sent = 250,000 received; 0 not credited, 0 amount differences |
+| Liquidity | bob's sendable balance fell from 5.0M to 4.75M sats |
+| Alerts | all 5 rules loaded, none firing |
+
+![Grafana dashboard after 30 regtest payments](docs/img/grafana-dashboard.png)
+
+Prometheus found the service (`lnpay` target UP):
+
+![Prometheus target UP](docs/img/prometheus-targets.png)
+
+The payment counter as Prometheus stores it:
+
+![Prometheus query lnpay_payments_finished_total](docs/img/prometheus-query.png)
+
+The alert rules loaded and inactive:
+
+![Prometheus alert rules](docs/img/prometheus-alerts.png)
+
 ![The service connected to two LND nodes](docs/img/dashboard.webp)
 
 A small Go service that sits next to two Lightning (LND) nodes: one receives ("alice"), one pays ("bob").
@@ -206,33 +232,6 @@ The server serves Prometheus metrics on `127.0.0.1:9101/metrics` (set `METRICS_A
 | `lnpay_channel_sendable_sats`, `lnpay_channels_active` | Can bob still pay (liquidity)? |
 
 The dashboard has four rows: is it working, ownership (SLO: 99.9% of payments settle within 30 s, error budget, oldest stuck payment), financial integrity (reconciliation, fees) and liquidity. `alerts.yml` adds books-do-not-reconcile, low liquidity and a fast SLO burn alert.
-
-### Run on a real regtest network
-
-Run on 13 Nov 2026: bitcoind and two LND nodes started by `scripts/regtest-local.sh`, 30 payments from bob to alice through the API, and 6 double-pay attempts. Prometheus scraped the service every 5 seconds and Grafana drew the dashboard.
-
-| What | Result |
-|---|---|
-| Payments | 30 of 30 SUCCEEDED, p95 time for the Pay call about 240 ms |
-| Double payments | 6 attempts, 6 refused with 409 |
-| Books | 250,000 sats sent = 250,000 received; 0 not credited, 0 amount differences |
-| Liquidity | bob's sendable balance fell from 5.0M to 4.75M sats |
-| Alerts | all 5 rules loaded, none firing |
-
-![Grafana dashboard after 30 regtest payments](docs/img/grafana-dashboard.png)
-
-Prometheus found the service (`lnpay` target UP):
-
-![Prometheus target UP](docs/img/prometheus-targets.png)
-
-The payment counter as Prometheus stores it:
-
-![Prometheus query lnpay_payments_finished_total](docs/img/prometheus-query.png)
-
-The alert rules loaded and inactive:
-
-![Prometheus alert rules](docs/img/prometheus-alerts.png)
-
 
 To run the whole thing without Docker or Polar: `BIN=<folder with bitcoind, lnd> scripts/regtest-local.sh up` starts bitcoind and two LND nodes and opens a bob → alice channel.
 
