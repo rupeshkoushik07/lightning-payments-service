@@ -187,3 +187,18 @@ SQL injection, vulnerability checks, backups and stress testing: see [docs/harde
 ```bash
 go test ./...
 ```
+
+## Metrics and dashboard
+
+The server serves Prometheus metrics on `127.0.0.1:9101/metrics` (set `METRICS_ADDR` to change it). This is a separate port from the API, so the numbers never sit on the public API.
+
+| Metric | Question it answers |
+|---|---|
+| `lnpay_payments_finished_total{status,by}` | Are payments succeeding? Did the sender or the crash-recovery tracker settle them? |
+| `lnpay_payments_unknown_total` | How often does the node give no final answer? |
+| `lnpay_payments_in_flight` | How many payments are stuck right now? |
+| `lnpay_pay_duration_seconds` | How slow is the node's Pay call (p50/p95)? |
+| `lnpay_node_calls_total{call,result}` | Is the LND node reachable? |
+| `lnpay_duplicates_blocked_total` | How many double payments did the database refuse? |
+
+`deploy/observability/` holds `prometheus.yml`, `alerts.yml` (stuck IN_FLIGHT for 10 minutes, LND errors) and `grafana-dashboard.json`. To use the dashboard, import it in Grafana and pick your Prometheus data source.

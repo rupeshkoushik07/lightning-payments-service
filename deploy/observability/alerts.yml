@@ -1,0 +1,15 @@
+groups:
+  - name: lnpay
+    rules:
+      # A payment we are unsure about for 10 minutes needs a human.
+      - alert: PaymentsStuckInFlight
+        expr: lnpay_payments_in_flight > 0
+        for: 10m
+        annotations:
+          summary: "{{ $value }} payment(s) IN_FLIGHT for 10 minutes; check the node (lncli getinfo) and the tracker logs"
+      # The node keeps refusing our calls.
+      - alert: NodeCallsFailing
+        expr: sum(rate(lnpay_node_calls_total{result="error"}[5m])) > 0.1
+        for: 5m
+        annotations:
+          summary: "LND calls are failing; is bob's node up?"

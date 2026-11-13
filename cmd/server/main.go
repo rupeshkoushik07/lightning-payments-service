@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/httpapi"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/lnd"
@@ -205,6 +206,18 @@ func run(log *slog.Logger) error {
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- srv.ListenAndServe() }()
 	log.Info("server started", "addr", srv.Addr)
+
+	// Metrics on their own port, so Prometheus never needs a session
+	// and the numbers are not on the public API. Same machine only by default.
+	metricsAddr := env("METRICS_ADDR", "127.0.0.1:9101")
+	metricsSrv := &http.Server{Addr: metricsAddr, Handler: promhttp.Handler(), ReadHeaderTimeout: 5 * time.Second}
+	go func() {
+		if err := metricsSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Warn("metrics server stopped", "err", err)
+		}
+	}()
+	defer metricsSrv.Close()
+	log.Info("metrics served", "addr", metricsAddr+"/metrics")
 
 	select {
 	case err := <-serveErr:

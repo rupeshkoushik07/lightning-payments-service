@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/metrics"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
@@ -59,7 +60,10 @@ func (s *Sender) PayOne(ctx context.Context) error {
 	}
 
 	// 2. Ask the node to pay.
+	started := time.Now()
 	res, err := s.Node.Pay(ctx, job)
+	metrics.PayDuration.Observe(time.Since(started).Seconds())
+	metrics.NodeCalls.WithLabelValues("pay", metrics.Result(err)).Inc()
 
 	// 3. Final answers are saved even if we are shutting down.
 	saveCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
@@ -69,10 +73,22 @@ func (s *Sender) PayOne(ctx context.Context) error {
 	case err != nil || res.Outcome == Unknown || res.Outcome == NotFound:
 		// We do not know. Leave the row IN_FLIGHT; the tracker will ask the node.
 		s.Log.Warn("payment outcome unknown, left in flight", "id", job.ID, "err", err)
+		metrics.PaymentsUnknown.Inc()
 		return nil
 	case res.Outcome == Succeeded:
-		return s.Payments.MarkSucceeded(saveCtx, job.ID, res.Preimage)
+		err = s.Payments.MarkSucceeded(saveCtx, job.ID, res.Preimage)
+		countFinished(err, "SUCCEEDED", "sender")
+		return err
 	default: // Failed
-		return s.Payments.MarkFailed(saveCtx, job.ID, res.Reason)
+		err = s.Payments.MarkFailed(saveCtx, job.ID, res.Reason)
+		countFinished(err, "FAILED", "sender")
+		return err
+	}
+}
+
+// countFinished counts a final status only once it is saved.
+func countFinished(err error, status, by string) {
+	if err == nil {
+		metrics.PaymentsFinished.WithLabelValues(status, by).Inc()
 	}
 }

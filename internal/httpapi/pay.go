@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/metrics"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
@@ -79,6 +80,7 @@ func (h *PayHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		FeeLimitSat: inv.AmountSat/100 + 10, // at most 1% plus 10 sats in routing fees
 	})
 	if errors.Is(err, store.ErrAlreadyPaying) {
+		metrics.DuplicatesBlocked.Inc()
 		reply(w, http.StatusConflict, "this invoice is already being paid or was paid")
 		return
 	}

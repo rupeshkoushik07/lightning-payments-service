@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/metrics"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 )
 
@@ -31,8 +32,10 @@ func (t *Tracker) ResolveAll(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	metrics.InFlight.Set(float64(len(open)))
 	for _, p := range open {
 		res, err := t.Node.Track(ctx, p.PaymentHash)
+		metrics.NodeCalls.WithLabelValues("track", metrics.Result(err)).Inc()
 		if err != nil {
 			// Could not reach the node. Change nothing; try again next round.
 			t.Log.Warn("could not ask node about payment", "id", p.ID, "err", err)
@@ -41,11 +44,14 @@ func (t *Tracker) ResolveAll(ctx context.Context) error {
 		switch res.Outcome {
 		case Succeeded:
 			err = t.Payments.MarkSucceeded(ctx, p.ID, res.Preimage)
+			countFinished(err, "SUCCEEDED", "tracker")
 		case Failed:
 			err = t.Payments.MarkFailed(ctx, p.ID, res.Reason)
+			countFinished(err, "FAILED", "tracker")
 		case NotFound:
 			if p.Age > notFoundGrace {
 				err = t.Payments.MarkFailed(ctx, p.ID, "node never received the payment request")
+				countFinished(err, "FAILED", "tracker")
 			}
 		case Unknown:
 			// Still trying. Leave it; ask again next round.
