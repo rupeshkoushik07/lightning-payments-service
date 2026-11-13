@@ -64,6 +64,29 @@ Everything runs on your own machine with play money (Bitcoin "regtest"). No real
 4. Open a channel from bob to alice: drag from bob to alice (or **bob → Actions → Open Channel → Outgoing**), capacity 250,000 sats.
 5. Click the Bitcoin node, then **Actions → Quick Mine**, and turn on **Auto Mine (30s)**. LND only works while new blocks keep arriving.
 
+### Use your own Polar network
+
+Nothing in this repository is tied to one machine. The server reads six settings from the environment, and `scripts/run-polar.sh` only fills in Polar's defaults. Open Polar, click a node, open the **Connect** tab, and use what it shows:
+
+| Setting | Default | Where to find it in Polar |
+|---|---|---|
+| `POLAR_NET` | `1` | the number of your network in Polar's list |
+| `RECEIVER_NODE` / `PAYER_NODE` | `alice` / `bob` | the node names on the canvas |
+| `ALICE_HOST` (receiver) | `127.0.0.1:10001` | receiver → Connect → GRPC Host |
+| `BOB_HOST` (payer) | `127.0.0.1:10002` | payer → Connect → GRPC Host |
+| `ALICE_TLS_CERT`, `BOB_TLS_CERT` | from the node names | Connect → TLS Cert (file path) |
+| `ALICE_MACAROON` | receiver's `invoice.macaroon` | Connect → File Paths → Invoice Macaroon |
+| `BOB_MACAROON` | payer's `admin.macaroon` | Connect → File Paths → Admin Macaroon |
+| `DATABASE_URL` | a local Postgres in Docker | any Postgres you already run |
+
+Example with other names and ports:
+
+```bash
+POLAR_NET=2 RECEIVER_NODE=carol PAYER_NODE=dave ALICE_HOST=127.0.0.1:10003 BOB_HOST=127.0.0.1:10004 scripts/run-polar.sh
+```
+
+The script checks that the four files exist before starting and tells you which one is missing. Only file **paths** are passed; the certificate and macaroon contents never enter the repository.
+
 ### Step 2: get the code and start the server
 
 ```bash
