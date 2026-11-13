@@ -112,7 +112,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(lnpay_duplicates_blocked_total[1h]))",
+          "expr": "round(sum(increase(lnpay_duplicates_blocked_total[1h])))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -648,7 +648,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(lnpay_fees_paid_sats_total[24h]))",
+          "expr": "round(sum(increase(lnpay_fees_paid_sats_total[24h])))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",

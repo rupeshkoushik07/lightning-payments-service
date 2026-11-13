@@ -207,4 +207,8 @@ The server serves Prometheus metrics on `127.0.0.1:9101/metrics` (set `METRICS_A
 
 The dashboard has four rows: is it working, ownership (SLO: 99.9% of payments settle within 30 s, error budget, oldest stuck payment), financial integrity (reconciliation, fees) and liquidity. `alerts.yml` adds books-do-not-reconcile, low liquidity and a fast SLO burn alert.
 
+![Grafana dashboard after 30 regtest payments](docs/img/grafana-dashboard.png)
+
+To run the whole thing without Docker or Polar: `BIN=<folder with bitcoind, lnd> scripts/regtest-local.sh up` starts bitcoind and two LND nodes and opens a bob → alice channel.
+
 `deploy/observability/` holds `prometheus.yml`, `alerts.yml` and `grafana-dashboard.json`. To use the dashboard, import it in Grafana and pick your Prometheus data source.
