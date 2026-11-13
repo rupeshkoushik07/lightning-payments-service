@@ -14,6 +14,10 @@ Run on 13 Nov 2026: bitcoind and two LND nodes started by `scripts/regtest-local
 
 ![Grafana dashboard after 30 regtest payments](docs/img/grafana-dashboard.png)
 
+Prometheus alerts: all 5 rules loaded, none firing (all quiet):
+
+![Prometheus alert rules](docs/img/prometheus-alerts.png)
+
 ![The service connected to two LND nodes](docs/img/dashboard.webp)
 
 A small Go service that sits next to two Lightning (LND) nodes: one receives ("alice"), one pays ("bob").
