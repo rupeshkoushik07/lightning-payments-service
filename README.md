@@ -200,5 +200,11 @@ The server serves Prometheus metrics on `127.0.0.1:9101/metrics` (set `METRICS_A
 | `lnpay_pay_duration_seconds` | How slow is the node's Pay call (p50/p95)? |
 | `lnpay_node_calls_total{call,result}` | Is the LND node reachable? |
 | `lnpay_duplicates_blocked_total` | How many double payments did the database refuse? |
+| `lnpay_oldest_in_flight_seconds` | How long has the oldest unsettled payment been waiting? |
+| `lnpay_fees_paid_sats_total`, `lnpay_fee_limit_used_ratio` | What did routing cost, and did any payment get near its fee limit? |
+| `lnpay_books_sent_sats`, `lnpay_books_received_sats`, `lnpay_books_mismatches{kind}` | Do the books balance? Read from the database every 30 s. `not_credited` and `amount_differs` must be 0. |
+| `lnpay_channel_sendable_sats`, `lnpay_channels_active` | Can bob still pay (liquidity)? |
 
-`deploy/observability/` holds `prometheus.yml`, `alerts.yml` (stuck IN_FLIGHT for 10 minutes, LND errors) and `grafana-dashboard.json`. To use the dashboard, import it in Grafana and pick your Prometheus data source.
+The dashboard has four rows: is it working, ownership (SLO: 99.9% of payments settle within 30 s, error budget, oldest stuck payment), financial integrity (reconciliation, fees) and liquidity. `alerts.yml` adds books-do-not-reconcile, low liquidity and a fast SLO burn alert.
+
+`deploy/observability/` holds `prometheus.yml`, `alerts.yml` and `grafana-dashboard.json`. To use the dashboard, import it in Grafana and pick your Prometheus data source.

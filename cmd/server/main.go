@@ -21,6 +21,7 @@ import (
 
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/httpapi"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/lnd"
+	"github.com/rupeshkoushik07/lightning-payments-service/internal/metrics"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/store"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/web"
 	"github.com/rupeshkoushik07/lightning-payments-service/internal/worker"
@@ -189,6 +190,30 @@ func run(log *slog.Logger) error {
 		})
 	}
 	start(func() { listener.Run(ctx) })
+	// Books and liquidity for the dashboard, every 30 seconds.
+	start(func() {
+		every(ctx, 30*time.Second, func() {
+			if b, err := db.Reconcile(ctx); err != nil {
+				log.Warn("reconcile round failed", "err", err)
+			} else {
+				metrics.BooksSentSat.Set(float64(b.SentSat))
+				metrics.BooksReceivedSat.Set(float64(b.ReceivedSat))
+				metrics.BooksMismatch.WithLabelValues("not_credited").Set(float64(b.NotCredited))
+				metrics.BooksMismatch.WithLabelValues("amount_differs").Set(float64(b.AmountDiffers))
+				metrics.BooksMismatch.WithLabelValues("paid_outside").Set(float64(b.PaidOutside))
+				if b.NotCredited > 0 || b.AmountDiffers > 0 {
+					log.Error("books do not reconcile", "not_credited", b.NotCredited, "amount_differs", b.AmountDiffers)
+				}
+			}
+			if s, err := payer.CanSend(ctx); err != nil {
+				metrics.ActiveChannels.Set(0)
+				metrics.SendableSat.Set(0)
+			} else {
+				metrics.ActiveChannels.Set(float64(s.ActiveChannels))
+				metrics.SendableSat.Set(float64(s.Sat))
+			}
+		})
+	})
 	start(func() {
 		every(ctx, time.Minute, func() {
 			if n, err := db.ExpireInvoices(ctx); err != nil {

@@ -13,3 +13,21 @@ groups:
         for: 5m
         annotations:
           summary: "LND calls are failing; is bob's node up?"
+      # Financial integrity: we paid but the receiver was not credited, or amounts differ.
+      - alert: BooksDoNotReconcile
+        expr: lnpay_books_mismatches{kind=~"not_credited|amount_differs"} > 0
+        for: 5m
+        annotations:
+          summary: "{{ $labels.kind }}: {{ $value }} payment(s) do not reconcile; pause payouts and compare with lncli listpayments / listinvoices"
+      # Liquidity: bob is about to run out of sendable balance.
+      - alert: LowLiquidity
+        expr: lnpay_channel_sendable_sats < 10000 or lnpay_channels_active == 0
+        for: 5m
+        annotations:
+          summary: "Bob can send {{ $value }} sats or has no active channel; rebalance or open a channel"
+      # SLO burn: losing budget 14x faster than allowed (would spend 30 days of budget in ~2 days).
+      - alert: SLOFastBurn
+        expr: (1 - sum(rate(lnpay_payments_finished_total{status="SUCCEEDED"}[1h])) / sum(rate(lnpay_payments_finished_total[1h]))) > 14 * 0.001
+        for: 5m
+        annotations:
+          summary: "Payment failure rate is burning the 99.9% error budget fast"

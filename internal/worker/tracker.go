@@ -33,6 +33,10 @@ func (t *Tracker) ResolveAll(ctx context.Context) error {
 		return err
 	}
 	metrics.InFlight.Set(float64(len(open)))
+	metrics.OldestInFlight.Set(0)
+	if len(open) > 0 {
+		metrics.OldestInFlight.Set(open[0].Age.Seconds()) // the list is oldest first
+	}
 	for _, p := range open {
 		res, err := t.Node.Track(ctx, p.PaymentHash)
 		metrics.NodeCalls.WithLabelValues("track", metrics.Result(err)).Inc()
@@ -45,6 +49,9 @@ func (t *Tracker) ResolveAll(ctx context.Context) error {
 		case Succeeded:
 			err = t.Payments.MarkSucceeded(ctx, p.ID, res.Preimage)
 			countFinished(err, "SUCCEEDED", "tracker")
+			if err == nil {
+				metrics.FeesPaidSat.Add(float64(res.FeeSat))
+			}
 		case Failed:
 			err = t.Payments.MarkFailed(ctx, p.ID, res.Reason)
 			countFinished(err, "FAILED", "tracker")

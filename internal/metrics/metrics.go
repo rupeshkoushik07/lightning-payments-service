@@ -53,3 +53,45 @@ func Result(err error) string {
 	}
 	return "ok"
 }
+
+var (
+	// Precise money maths: routing fees actually paid, in whole sats.
+	FeesPaidSat = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "lnpay_fees_paid_sats_total",
+		Help: "Routing fees paid on successful payments, in sats.",
+	})
+	// Share of the fee limit each payment used. Above 1.0 would be a bug.
+	FeeLimitUsed = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "lnpay_fee_limit_used_ratio",
+		Help:    "Fee paid divided by the fee limit, per successful payment.",
+		Buckets: []float64{0, 0.1, 0.25, 0.5, 0.75, 0.9, 1, 1.5},
+	})
+
+	// Partial failures: one payment stuck 2 hours is worse than five stuck 2 seconds.
+	OldestInFlight = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "lnpay_oldest_in_flight_seconds",
+		Help: "Age of the oldest IN_FLIGHT payment at the last tracker round (0 if none).",
+	})
+
+	// Liquidity: what bob can still send. Low means payments will start failing.
+	SendableSat = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "lnpay_channel_sendable_sats",
+		Help: "Local balance of bob's active channels.",
+	})
+	ActiveChannels = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "lnpay_channels_active",
+		Help: "Bob's channels whose partner is connected.",
+	})
+
+	// Reconciliation, read from the database (survives restarts, unlike counters).
+	BooksSentSat = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "lnpay_books_sent_sats", Help: "Sum of SUCCEEDED payments.",
+	})
+	BooksReceivedSat = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "lnpay_books_received_sats", Help: "Sum of PAID invoices.",
+	})
+	BooksMismatch = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "lnpay_books_mismatches",
+		Help: "Rows that do not reconcile. not_credited and amount_differs must be 0.",
+	}, []string{"kind"}) // not_credited | amount_differs | paid_outside
+)

@@ -23,6 +23,7 @@ const (
 type Result struct {
 	Outcome  Outcome
 	Preimage []byte
+	FeeSat   int64 // routing fee paid; set only on success
 	Reason   string
 }
 
@@ -78,6 +79,12 @@ func (s *Sender) PayOne(ctx context.Context) error {
 	case res.Outcome == Succeeded:
 		err = s.Payments.MarkSucceeded(saveCtx, job.ID, res.Preimage)
 		countFinished(err, "SUCCEEDED", "sender")
+		if err == nil {
+			metrics.FeesPaidSat.Add(float64(res.FeeSat))
+			if job.FeeLimitSat > 0 {
+				metrics.FeeLimitUsed.Observe(float64(res.FeeSat) / float64(job.FeeLimitSat))
+			}
+		}
 		return err
 	default: // Failed
 		err = s.Payments.MarkFailed(saveCtx, job.ID, res.Reason)

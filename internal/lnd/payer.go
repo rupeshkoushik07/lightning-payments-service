@@ -96,7 +96,7 @@ func toResult(pay *lnrpc.Payment) worker.Result {
 		if err != nil || len(preimage) != 32 {
 			return worker.Result{Outcome: worker.Unknown} // no valid receipt, no success
 		}
-		return worker.Result{Outcome: worker.Succeeded, Preimage: preimage}
+		return worker.Result{Outcome: worker.Succeeded, Preimage: preimage, FeeSat: pay.FeeSat}
 	case lnrpc.Payment_FAILED:
 		return worker.Result{Outcome: worker.Failed, Reason: pay.FailureReason.String()}
 	default: // still in flight
